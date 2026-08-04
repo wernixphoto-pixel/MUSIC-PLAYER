@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Larix Music Player</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<div class="player">
+
+<h2 id="title">Loading...</h2>
+
+<button id="play">▶ Play</button>
+
+<button id="prev">⏮ Prev</button>
+
+<button id="next">⏭ Next</button>
+
+<br><br>
+
+Volume
+
+<input
+type="range"
+id="volume"
+min="0"
+max="100"
+value="70">
+
+<br><br>
+
+<input
+type="checkbox"
+id="shuffle">
+
+Shuffle
+
+</div>
+
+<audio id="audio" autoplay playsinline></audio>
+
+<script src="player.js"></script>
+
+</body>
+</html>
