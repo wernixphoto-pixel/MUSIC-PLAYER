@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Larix Music Player</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+
+height:100vh;
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+font-family:Arial,Helvetica,sans-serif;
+
+background:rgba(0,0,0,.25);
+
+color:#fff;
+
+}
+
+.player{
+
+width:340px;
+
+padding:20px;
+
+border-radius:18px;
+
+background:rgba(0,0,0,.45);
+
+backdrop-filter:blur(12px);
+
+text-align:center;
+
+}
+
+#title{
+
+font-size:22px;
+
+margin-bottom:20px;
+
+}
+
+button{
+
+width:90px;
+height:40px;
+
+margin:5px;
+
+border:none;
+
+border-radius:10px;
+
+font-size:15px;
+
+cursor:pointer;
+
+}
+
+button:hover{
+
+opacity:.9;
+
+}
+
+.range{
+
+margin-top:20px;
+
+}
+
+input[type=range]{
+
+width:100%;
+
+margin-top:8px;
+
+}
+
+.shuffle{
+
+margin-top:20px;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="player">
+
+<h2 id="title">Loading...</h2>
+
+<div>
+
+<button id="prev">⏮ Prev</button>
+
+<button id="play">▶ Play</button>
+
+<button id="next">⏭ Next</button>
+
+</div>
+
+<div class="range">
+
+Volume
+
+<input
+type="range"
+id="volume"
+min="0"
+max="100"
+value="70">
+
+</div>
+
+<div class="shuffle">
+
+<label>
+
+<input
+type="checkbox"
+id="shuffle">
+
+Shuffle
+
+</label>
+
+</div>
+
+</div>
+
+<audio
+id="audio"
+autoplay
+playsinline>
+</audio>
+
+<script>
+
+const playlist=[
+
+{
+title:"Lagu 1",
+file:"music/lagu1.mp3"
+},
+
+{
+title:"Lagu 2",
+file:"music/lagu2.mp3"
+},
+
+{
+title:"Lagu 3",
+file:"music/lagu3.mp3"
+}
+
+];
+
+const audio=document.getElementById("audio");
+
+const title=document.getElementById("title");
+
+const play=document.getElementById("play");
+
+const next=document.getElementById("next");
+
+const prev=document.getElementById("prev");
+
+const volume=document.getElementById("volume");
+
+const shuffle=document.getElementById("shuffle");
+
+let current=0;
+
+const savedVolume=localStorage.getItem("volume");
+
+if(savedVolume){
+
+volume.value=savedVolume;
+
+}
+
+audio.volume=volume.value/100;
+
+function loadSong(index){
+
+current=index;
+
+audio.src=playlist[current].file;
+
+title.textContent=playlist[current].title;
+
+audio.load();
+
+audio.play().catch(()=>{});
+
+play.innerHTML="⏸ Pause";
+
+}
+
+loadSong(0);
+
+play.onclick=function(){
+
+if(audio.paused){
+
+audio.play();
+
+play.innerHTML="⏸ Pause";
+
+}else{
+
+audio.pause();
+
+play.innerHTML="▶ Play";
+
+}
+
+};
+
+next.onclick=function(){
+
+if(shuffle.checked){
+
+let random;
+
+do{
+
+random=Math.floor(Math.random()*playlist.length);
+
+}while(playlist.length>1 && random===current);
+
+current=random;
+
+}else{
+
+current++;
+
+if(current>=playlist.length){
+
+current=0;
+
+}
+
+}
+
+loadSong(current);
+
+};
+
+prev.onclick=function(){
+
+current--;
+
+if(current<0){
+
+current=playlist.length-1;
+
+}
+
+loadSong(current);
+
+};
+
+audio.onended=function(){
+
+next.click();
+
+};
+
+volume.oninput=function(){
+
+audio.volume=this.value/100;
+
+localStorage.setItem("volume",this.value);
+
+};
+
+document.addEventListener("visibilitychange",function(){
+
+if(document.visibilityState==="visible" && audio.paused){
+
+audio.play().catch(()=>{});
+
+}
+
+});
+
+setInterval(function(){
+
+if(audio.paused){
+
+audio.play().catch(()=>{});
+
+}
+
+},5000);
+
+</script>
+
+</body>
+</html>
