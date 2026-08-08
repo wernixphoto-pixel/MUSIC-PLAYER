@@ -1,52 +1,124 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Larix Music Player</title>
-
-<link rel="stylesheet" href="style.css">
-
+<style>
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: transparent;
+}
+</style>
 </head>
 
 <body>
 
-<div class="player">
+<script>
+const AUDIO_URL =
+    "music/lagu1.mp3";
 
-<h2 id="title">Loading...</h2>
+let audioContext;
+let audio;
+let source;
+let destination;
 
-<button id="play">▶ Play</button>
+async function startAudio() {
 
-<button id="prev">⏮ Prev</button>
+    try {
 
-<button id="next">⏭ Next</button>
+        audioContext =
+            new (window.AudioContext ||
+                 window.webkitAudioContext)();
 
-<br><br>
+        audio =
+            new Audio();
 
-Volume
+        audio.src = AUDIO_URL;
 
-<input
-type="range"
-id="volume"
-min="0"
-max="100"
-value="70">
+        audio.crossOrigin = "anonymous";
 
-<br><br>
+        audio.loop = true;
 
-<input
-type="checkbox"
-id="shuffle">
+        audio.preload = "auto";
 
-Shuffle
+        /*
+         * Masukkan audio ke Web Audio API
+         */
+        source =
+            audioContext.createMediaElementSource(audio);
 
-</div>
+        /*
+         * Buat MediaStream destination
+         */
+        destination =
+            audioContext.createMediaStreamDestination();
 
-<audio id="audio" autoplay playsinline></audio>
+        /*
+         * Audio → MediaStream
+         */
+        source.connect(destination);
 
-<script src="player.js"></script>
+        /*
+         * Tetap kirim ke output WebView
+         * untuk membantu mempertahankan playback.
+         */
+        source.connect(audioContext.destination);
+
+        /*
+         * Mulai AudioContext
+         */
+        if (audioContext.state === "suspended") {
+            await audioContext.resume();
+        }
+
+        /*
+         * Putar lagu
+         */
+        await audio.play();
+
+        console.log(
+            "Audio berhasil dimulai"
+        );
+
+        console.log(
+            "Audio state:",
+            audioContext.state
+        );
+
+        console.log(
+            "Tracks:",
+            destination.stream.getAudioTracks().length
+        );
+
+        /*
+         * Simpan stream supaya bisa
+         * kita akses untuk tahap berikutnya.
+         */
+        window.audioStream =
+            destination.stream;
+
+    } catch (error) {
+
+        console.log(
+            "Audio error:",
+            error
+        );
+    }
+}
+
+
+/*
+ * Mulai setelah halaman dibuka
+ */
+startAudio();
+
+</script>
 
 </body>
 </html>
