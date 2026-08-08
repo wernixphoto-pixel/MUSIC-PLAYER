@@ -2,121 +2,434 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Audio Stream Test</title>
 
 <style>
+
 html,
 body {
     width: 100%;
     height: 100%;
     margin: 0;
     padding: 0;
+
     overflow: hidden;
+
     background: transparent;
+
+    font-family: Arial, sans-serif;
 }
+
+#panel {
+
+    position: fixed;
+
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+
+    width: 280px;
+
+    padding: 20px;
+
+    border-radius: 12px;
+
+    background: rgba(0,0,0,0.75);
+
+    color: white;
+
+    text-align: center;
+}
+
+button {
+
+    border: none;
+
+    border-radius: 8px;
+
+    padding: 12px 20px;
+
+    margin: 5px;
+
+    font-size: 17px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+#play {
+    background: #18a558;
+    color: white;
+}
+
+#stop {
+    background: #d62828;
+    color: white;
+}
+
+#status {
+
+    margin-top: 15px;
+
+    line-height: 1.7;
+
+    font-size: 15px;
+}
+
+.ok {
+    color: #00ff88;
+}
+
+.error {
+    color: #ff5555;
+}
+
 </style>
 </head>
 
+
 <body>
 
-<script>
-const AUDIO_URL =
-    "music/lagu1.mp3";
 
-let audioContext;
-let audio;
-let source;
-let destination;
+<div id="panel">
+
+    <div>
+        <button id="play"
+                onclick="startAudio()">
+            ▶ PLAY
+        </button>
+
+        <button id="stop"
+                onclick="stopAudio()">
+            ■ STOP
+        </button>
+    </div>
+
+
+    <div id="status">
+
+        Audio:
+        <span id="audioStatus">
+            belum dimulai
+        </span>
+
+        <br>
+
+        AudioContext:
+        <span id="contextStatus">
+            -
+        </span>
+
+        <br>
+
+        MediaStream:
+        <span id="streamStatus">
+            -
+        </span>
+
+        <br>
+
+        Audio Track:
+        <span id="trackStatus">
+            -
+        </span>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/*
+ * ======================================
+ * FILE MP3 DI ROOT GITHUB
+ * ======================================
+ */
+
+const AUDIO_URL = "lagu1.mp3";
+
+
+let audioContext = null;
+
+let audio = null;
+
+let source = null;
+
+let destination = null;
+
+
+/*
+ * ======================================
+ * START AUDIO
+ * ======================================
+ */
 
 async function startAudio() {
 
     try {
 
-        audioContext =
-            new (window.AudioContext ||
-                 window.webkitAudioContext)();
-
-        audio =
-            new Audio();
-
-        audio.src = AUDIO_URL;
-
-        audio.crossOrigin = "anonymous";
-
-        audio.loop = true;
-
-        audio.preload = "auto";
-
         /*
-         * Masukkan audio ke Web Audio API
+         * Buat AudioContext
          */
-        source =
-            audioContext.createMediaElementSource(audio);
 
-        /*
-         * Buat MediaStream destination
-         */
-        destination =
-            audioContext.createMediaStreamDestination();
+        if (!audioContext) {
 
-        /*
-         * Audio → MediaStream
-         */
-        source.connect(destination);
+            audioContext =
+                new (
+                    window.AudioContext ||
+                    window.webkitAudioContext
+                )();
 
-        /*
-         * Tetap kirim ke output WebView
-         * untuk membantu mempertahankan playback.
-         */
-        source.connect(audioContext.destination);
-
-        /*
-         * Mulai AudioContext
-         */
-        if (audioContext.state === "suspended") {
-            await audioContext.resume();
         }
 
+
         /*
-         * Putar lagu
+         * Buat audio element
          */
+
+        if (!audio) {
+
+            audio = new Audio();
+
+            audio.src = AUDIO_URL;
+
+            audio.crossOrigin = "anonymous";
+
+            audio.loop = true;
+
+            audio.preload = "auto";
+
+
+            /*
+             * Audio → Web Audio API
+             */
+
+            source =
+                audioContext
+                .createMediaElementSource(
+                    audio
+                );
+
+
+            /*
+             * Buat MediaStream
+             */
+
+            destination =
+                audioContext
+                .createMediaStreamDestination();
+
+
+            /*
+             * Audio → MediaStream
+             */
+
+            source.connect(
+                destination
+            );
+
+
+            /*
+             * Audio → speaker browser
+             */
+
+            source.connect(
+                audioContext.destination
+            );
+
+
+            /*
+             * Simpan MediaStream
+             */
+
+            window.audioStream =
+                destination.stream;
+
+        }
+
+
+        /*
+         * Resume AudioContext
+         */
+
+        if (
+            audioContext.state ===
+            "suspended"
+        ) {
+
+            await audioContext.resume();
+
+        }
+
+
+        /*
+         * PLAY
+         */
+
         await audio.play();
 
-        console.log(
-            "Audio berhasil dimulai"
-        );
 
-        console.log(
-            "Audio state:",
-            audioContext.state
-        );
+        updateStatus();
 
-        console.log(
-            "Tracks:",
-            destination.stream.getAudioTracks().length
-        );
 
-        /*
-         * Simpan stream supaya bisa
-         * kita akses untuk tahap berikutnya.
-         */
-        window.audioStream =
-            destination.stream;
+    }
 
-    } catch (error) {
+    catch (error) {
 
-        console.log(
-            "Audio error:",
+        console.error(
+            "Audio Error:",
             error
         );
+
+
+        document.getElementById(
+            "audioStatus"
+        ).innerHTML =
+            "<span class='error'>ERROR</span>";
+
     }
+
 }
 
 
 /*
- * Mulai setelah halaman dibuka
+ * ======================================
+ * STOP AUDIO
+ * ======================================
  */
-startAudio();
+
+function stopAudio() {
+
+    if (!audio) return;
+
+
+    audio.pause();
+
+    audio.currentTime = 0;
+
+
+    updateStatus();
+
+}
+
+
+/*
+ * ======================================
+ * UPDATE STATUS
+ * ======================================
+ */
+
+function updateStatus() {
+
+    const audioStatus =
+        document.getElementById(
+            "audioStatus"
+        );
+
+    const contextStatus =
+        document.getElementById(
+            "contextStatus"
+        );
+
+    const streamStatus =
+        document.getElementById(
+            "streamStatus"
+        );
+
+    const trackStatus =
+        document.getElementById(
+            "trackStatus"
+        );
+
+
+    /*
+     * Audio
+     */
+
+    if (
+        audio &&
+        !audio.paused
+    ) {
+
+        audioStatus.innerHTML =
+            "<span class='ok'>PLAYING</span>";
+
+    }
+    else {
+
+        audioStatus.innerHTML =
+            "STOP";
+
+    }
+
+
+    /*
+     * AudioContext
+     */
+
+    if (audioContext) {
+
+        contextStatus.innerHTML =
+            audioContext.state;
+
+    }
+
+
+    /*
+     * MediaStream
+     */
+
+    if (window.audioStream) {
+
+        if (
+            window.audioStream.active
+        ) {
+
+            streamStatus.innerHTML =
+                "<span class='ok'>ACTIVE</span>";
+
+        }
+        else {
+
+            streamStatus.innerHTML =
+                "<span class='error'>INACTIVE</span>";
+
+        }
+
+
+        /*
+         * Audio Track
+         */
+
+        const tracks =
+            window.audioStream
+            .getAudioTracks();
+
+
+        trackStatus.innerHTML =
+            tracks.length;
+
+    }
+
+}
+
+
+/*
+ * ======================================
+ * UPDATE STATUS OTOMATIS
+ * ======================================
+ */
+
+setInterval(
+    updateStatus,
+    1000
+);
 
 </script>
 
